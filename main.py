@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 import webapp2, os
+from api import ApiHandler
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
@@ -22,5 +23,6 @@ class MainHandler(webapp2.RequestHandler):
         self.response.write(INDEX_HTML)
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/api', ApiHandler)
 ], debug=True)

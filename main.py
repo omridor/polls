@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import webapp2
+import webapp2, os
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        INDEX_HTML = open('index2.html').read()
+        INDEX_HTML = open(os.path.join(os.path.dirname(__file__), 'dist', 'app', 'dev', 'index.html')).read()
         self.response.write(INDEX_HTML)
 
 app = webapp2.WSGIApplication([

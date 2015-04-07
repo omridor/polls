@@ -5,8 +5,14 @@ api_version: 1
 threadsafe: true
 
 handlers:
-- url: /stylesheets
-  static_dir: stylesheets
+- url: /styles
+  static_dir: dist/app/dev/styles
+
+- url: /scripts
+  static_dir: dist/app/dev/scripts
+
+- url: /fonts
+  static_dir: dist/app/dev/fonts
 
 - url: /.*
   script: main.app

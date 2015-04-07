@@ -18,7 +18,8 @@ import webapp2
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        self.response.write('Hello world!')
+        INDEX_HTML = open('index2.html').read()
+        self.response.write(INDEX_HTML)
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler)

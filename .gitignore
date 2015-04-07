@@ -19,6 +19,7 @@ reports/
 build/
 dist/
 .tmp
+*.pyc
 
 # Vendor files
 node_modules/

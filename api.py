@@ -17,11 +17,12 @@ class ApiHandler(webapp2.RequestHandler):
             self.getAllPolls(userOrNone)
         #elif (method=='vote'): for easy browser debugging
         #   self.postUserVote()
-        elif (method=="calculateWeights"):
+        elif (method=='calculateWeights'):
             ws = WeightSolver()
             ws.calculateWeights()
             self.response.out.write('Successfully calculated weights!')
-
+        elif (method=='getUsers'):
+            self.getUsers(userOrNone)
         elif (method=='none'):
             self.response.out.write('No method was selected')
         else:
@@ -38,10 +39,29 @@ class ApiHandler(webapp2.RequestHandler):
         # self.response.headers['Content-Type'] = 'text/plain'
         if method=='vote':
             self.postUserVote()
+        elif method=='user':
+            self.newUser()
         elif (method=='none'):
             self.response.out.write('No method was selected')
         else:
             self.response.out.write('Method does not exist')
+
+    def newUser(self):
+        email = self.request.get('email', None)
+        name = self.request.get('name', None)
+        picture = self.request.get('picture', None)
+        user = User(parent=DATASTORE_KEY, email=email, name=name, picture=picture)
+        user.put()
+        self.response.out.write(json.dumps(self.userToJson(user)))
+
+    def getUsers(self, userOrNone):
+        query = User.query()
+        if (userOrNone is not None):
+            query = User.query(User.email != userOrNone.email)
+        users = query.fetch()
+        userJsons = map(lambda user: self.userToJson(user), users)
+        self.response.out.write(json.dumps(userJsons))
+
 
     def postUserVote(self):
         user = self.getUserOrNone()     
@@ -186,6 +206,16 @@ class ApiHandler(webapp2.RequestHandler):
             'tags': poll.tags,
             'questions': questionJsons,
         }
+
+    def userToJson(self, user):
+        return {
+            'id': user.keyInteger,
+            'email': user.email,
+            'name': user.name,
+            'weight': user.weight,
+            'picture': user.picture,
+        }
+
 
             
 

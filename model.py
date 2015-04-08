@@ -19,6 +19,7 @@ class User(ndb.Model):
     name = ndb.StringProperty(indexed=False)
     weight = ndb.FloatProperty(indexed=False,default=1.0)
     keyInteger = ndb.ComputedProperty(lambda self: self.key.integer_id())
+    picture = ndb.StringProperty(indexed=False)
 
 
 class Poll(ndb.Model):
@@ -119,16 +120,14 @@ class DataMocker:
         ndb.delete_multi(User.query().fetch(keys_only=True))
 
 
-        # 5 users
-        self.actualUser = User(parent=DATASTORE_KEY, email = "user0@example.com", name = 'user')
-        self.actualUser.put()
-        self.user1 = User(parent=DATASTORE_KEY, email = "user1@example.com", name = 'user1')
+        # 4 users
+        self.user1 = User(parent=DATASTORE_KEY, email = "user1@example.com", name = 'Omri Dor', picture='/profile_pics/omri.jpg')
         self.user1.put()
-        self.user2 = User(parent=DATASTORE_KEY, email = "user2@example.com", name = 'user2')
+        self.user2 = User(parent=DATASTORE_KEY, email = "user2@example.com", name = 'Joshua Skrzypek', picture='/profile_pics/joshua.jpg')
         self.user2.put()
-        self.user3 = User(parent=DATASTORE_KEY, email = "user3@example.com", name = 'user3')
+        self.user3 = User(parent=DATASTORE_KEY, email = "user3@example.com", name = 'Benjamin Netanyahu', picture='/profile_pics/bibi.jpg')
         self.user3.put()
-        self.user4 = User(parent=DATASTORE_KEY, email = "user4@example.com", name = 'user4')
+        self.user4 = User(parent=DATASTORE_KEY, email = "user4@example.com", name = 'Tzipi Livni', picture='/profile_pics/livni.jpg')
         self.user4.put()
 
         self.addControlPoll()

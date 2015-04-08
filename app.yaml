@@ -5,6 +5,8 @@ api_version: 1
 threadsafe: true
 
 handlers:
+- url: /profile_pics
+  static_dir: profile_pics
 - url: /.*
   script: main.app
 

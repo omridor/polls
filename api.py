@@ -4,8 +4,11 @@ from model import User, Poll, Question, Choice, UserAnswers, DataMocker, DATASTO
 class ApiHandler(webapp2.RequestHandler):
     def get(self):
         method = self.request.get('method', 'none')
-        userOrNone = self.getUserOrNone()     
-        self.response.headers['Content-Type'] = 'text/plain'
+        userOrNone = self.getUserOrNone()
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+        self.response.headers.add_header("Access-Control-Allow-Headers", "Content-Type,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Accept,Access-Control-Allow-Methods,X-Requested-With")
+        self.response.headers['Content-Type'] = 'application/jsonp'
+        # self.response.headers['Content-Type'] = 'text/plain'
         if (method=='populateFakeData'):
             self.populateFakeData()
         elif (method=='getMostRecentPoll'):
@@ -17,22 +20,28 @@ class ApiHandler(webapp2.RequestHandler):
         elif (method=="calculateWeights"):
             ws = WeightSolver()
             ws.calculateWeights()
-            self.response.write('Successfully calculated weights!')
+            self.response.out.write('Successfully calculated weights!')
 
         elif (method=='none'):
-            self.response.write('No method was selected')
+            self.response.out.write('No method was selected')
         else:
-            self.response.write('Method does not exist')
+            self.response.out.write('Method does not exist')
+
+    def options(self):
+        self.get()
 
     def post(self):
         method = self.request.get('method', 'none')
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+        self.response.headers.add_header("Access-Control-Allow-Headers", "*")
+        self.response.headers['Content-Type'] = 'application/jsonp'
+        # self.response.headers['Content-Type'] = 'text/plain'
         if method=='vote':
             self.postUserVote()
         elif (method=='none'):
-            self.response.write('No method was selected')
+            self.response.out.write('No method was selected')
         else:
-            self.response.write('Method does not exist')
+            self.response.out.write('Method does not exist')
 
     def postUserVote(self):
         user = self.getUserOrNone()     
@@ -40,28 +49,28 @@ class ApiHandler(webapp2.RequestHandler):
         choice_id = self.request.get('choice_id', None)
         choice_numeric = self.request.get('choice_numeric', None)
         if (user is None):
-            self.response.write(json.dumps(
+            self.response.out.write(json.dumps(
             {
                 'status': 'FAILURE',
                 'info': 'user_email required',
             }))
             return
         if (question_id is None):
-            self.response.write(json.dumps(
+            self.response.out.write(json.dumps(
             {
                 'status': 'FAILURE',
                 'info': 'question_id required',
             }))
             return
         if (choice_id is None and choice_numeric == None):
-            self.response.write(json.dumps(
+            self.response.out.write(json.dumps(
             {
                 'status': 'FAILURE',
                 'info': 'choice_id or choice_numeric required',
             }))
             return
         if (choice_id is not None and choice_numeric is not None):
-            self.response.write(json.dumps(
+            self.response.out.write(json.dumps(
             {
                 'status': 'FAILURE',
                 'info': 'Only one of {choice_id, choice_numeric} should be stated',
@@ -87,8 +96,7 @@ class ApiHandler(webapp2.RequestHandler):
         
         # Store in db
         newVote.put()
-        print newVote
-        self.response.write(json.dumps(
+        self.response.out.write(json.dumps(
             {
                 'status': 'SUCCESS',
                 'user_email': user.email,
@@ -113,16 +121,16 @@ class ApiHandler(webapp2.RequestHandler):
         dm.populateFakeData()
         users = User.query().fetch()
         emails = map(lambda user: user.email, users)
-        self.response.write('Just populated fake data with user emails:\n'+ '\n'.join(str(e) for e in emails))
+        self.response.out.write('Just populated fake data with user emails:\n'+ '\n'.join(str(e) for e in emails))
 
     def getMostRecentPoll(self, opt_user):
         mostRecentPoll = Poll.query().order(-Poll.publishedOn).get()
-        self.response.write(json.dumps(self. pollToJson(mostRecentPoll, opt_user)))
+        self.response.out.write(json.dumps(self. pollToJson(mostRecentPoll, opt_user)))
 
     def getAllPolls(self, opt_user):
         polls = Poll.query().fetch()
         pollsJsons = map(lambda poll: self.pollToJson(poll, opt_user), polls)
-        self.response.write(json.dumps(pollsJsons))
+        self.response.out.write(json.dumps(pollsJsons))
 
     def choiceToJson(self, choice, opt_user):
         res = {

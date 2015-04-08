@@ -47,6 +47,13 @@ class ApiHandler(webapp2.RequestHandler):
             self.response.out.write('Method does not exist')
 
     def newUser(self):
+        if User.query(User.email == userOrNone.email).count()>0:
+            self.response.out.write(json.dumps(
+            {
+                'status': 'FAILURE',
+                'info': 'user with this email already exists',
+            }))
+            return
         email = self.request.get('email', None)
         name = self.request.get('name', None)
         picture = self.request.get('picture', None)

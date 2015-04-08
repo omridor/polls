@@ -91,11 +91,6 @@ class WeightSolver:
             filter(UserAnswers._properties["choice"]==self.femaleChoiceId).
             filter(UserAnswers._properties["isUpToDate"]==True)).count()
 
-        print 'females\n'
-        print femaleNum
-        print '\nmales\n'
-        print maleNum
-
         if femaleNum == 0 or maleNum == 0:
             return
         

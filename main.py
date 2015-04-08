@@ -14,12 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import webapp2
+import webapp2, os
+from api import ApiHandler
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        self.response.write('Hello world!')
+        INDEX_HTML = open(os.path.join(os.path.dirname(__file__), 'dist', 'mobile', 'dev', 'index.html')).read()
+        self.response.write(INDEX_HTML)
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/api', ApiHandler)
 ], debug=True)

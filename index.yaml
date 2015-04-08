@@ -10,8 +10,9 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: Greeting
-  ancestor: yes
+- kind: UserAnswers
   properties:
-  - name: date
+  - name: question
+  - name: user
+  - name: updatedOn
     direction: desc

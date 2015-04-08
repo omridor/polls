@@ -5,14 +5,30 @@ api_version: 1
 threadsafe: true
 
 handlers:
-- url: /stylesheets
-  static_dir: stylesheets
+- url: /styles
+  static_dir: dist/app/dev/styles
+
+- url: /scripts
+  static_dir: dist/app/dev/scripts
+
+- url: /fonts
+  static_dir: dist/app/dev/fonts
 
 - url: /.*
-  script: guestbook.application
+  script: main.app
 
 libraries:
 - name: webapp2
   version: latest
 - name: jinja2
   version: latest
+
+skip_files:
+- ^(.*/)?#.*#$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*/RCS/.*$
+- ^(.*/)?\..*$
+- ^bower_components(/.*)?$
+- ^client(/.*)?$
+- ^node_modules(/.*)?$

@@ -1,4 +1,4 @@
-import webapp2, json
+import webapp2, json, time
 from model import User, Poll, Question, Choice, UserAnswers, DataMocker, DATASTORE_KEY
 
 class ApiHandler(webapp2.RequestHandler):
@@ -12,6 +12,8 @@ class ApiHandler(webapp2.RequestHandler):
             self.getMostRecentPoll(userOrNone)
         elif (method=='getAllPolls'):
             self.getAllPolls(userOrNone)
+        #elif (method=='vote'): for easy browser debugging
+        #   self.postUserVote()
         elif (method=='none'):
             self.response.write('No method was selected')
         else:
@@ -21,31 +23,52 @@ class ApiHandler(webapp2.RequestHandler):
         method = self.request.get('method', 'none')
         self.response.headers['Content-Type'] = 'text/plain'
         if method=='vote':
-            self.userVote()
+            self.postUserVote()
         elif (method=='none'):
             self.response.write('No method was selected')
         else:
             self.response.write('Method does not exist')
 
-    def userVote(self):
+    def postUserVote(self):
         user = self.getUserOrNone()     
         question_id = self.request.get('question_id', None)
         choice_id = self.request.get('choice_id', None)
         choice_numeric = self.request.get('choice_numeric', None)
         if (user is None):
-            self.response.write('user_email required')
+            self.response.write(json.dumps(
+            {
+                'status': 'FAILURE',
+                'info': 'user_email required',
+            }))
+            return
         if (question_id is None):
-            self.response.write('question_id required')
+            self.response.write(json.dumps(
+            {
+                'status': 'FAILURE',
+                'info': 'question_id required',
+            }))
+            return
         if (choice_id is None and choice_numeric == None):
-            self.response.write('choice_id or choice_numeric required')
+            self.response.write(json.dumps(
+            {
+                'status': 'FAILURE',
+                'info': 'choice_id or choice_numeric required',
+            }))
+            return
         if (choice_id is not None and choice_numeric is not None):
-            self.response.write('ony one of {choice_id, choice_numeric} should be stated')
+            self.response.write(json.dumps(
+            {
+                'status': 'FAILURE',
+                'info': 'Only one of {choice_id, choice_numeric} should be stated',
+            }))
+            return
         
         # Invalidate old votes
         oldVotes = (UserAnswers.query().
-            filter(UserAnswers._properties["question"]==question_id).
+            filter(UserAnswers._properties["question"]==int(question_id)).
             filter(UserAnswers._properties["user"]==user.key.integer_id()).
-            filter(UserAnswers._properties["isUpToDate"]==True)).fetch()
+            filter(UserAnswers._properties["isUpToDate"]==True).fetch())
+
         for oldVote in oldVotes:
             oldVote.isUpToDate = False
             oldVote.put()
@@ -53,20 +76,22 @@ class ApiHandler(webapp2.RequestHandler):
         # Create new choice vote
         newVote = None
         if (choice_id is not None):
-            newVote = UserAnswers(parent=DATASTORE_KEY,question=question_id,user=user.key.integer_id(),choice=choice_id)
+            newVote = UserAnswers(parent=DATASTORE_KEY,question=int(question_id),user=user.key.integer_id(),choice=int(choice_id))
         elif (choice_numeric is not None):   
-            newVote = UserAnswers(parent=DATASTORE_KEY,question=question_id,user=user.key.integer_id(),number=choice_numeric)
+            newVote = UserAnswers(parent=DATASTORE_KEY,question=int(question_id),user=user.key.integer_id(),number=int(choice_numeric))
         
         # Store in db
         newVote.put()
+        print newVote
         self.response.write(json.dumps(
             {
                 'status': 'SUCCESS',
                 'user_email': user.email,
-                'question_id': question_id,
-                'choice_id': newVote.choice_id,
+                'question_id': newVote.question,
+                'choice_id': newVote.choice,
                 'number': newVote.number,
-                'timestamp': newVote.updatedOn.now(),
+                'timestamp': time.mktime(newVote.updatedOn.timetuple()) * 1000 + newVote.updatedOn.microsecond / 1000
+,
             }))
 
     def getUserOrNone(self):

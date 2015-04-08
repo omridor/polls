@@ -17,6 +17,7 @@ DATASTORE_KEY = ndb.Key('test', 'test')
 class User(ndb.Model):
     email = ndb.StringProperty(indexed=True)
     name = ndb.StringProperty(indexed=False)
+    weight = ndb.FloatProperty(indexed=False,default=1.0)
     keyInteger = ndb.ComputedProperty(lambda self: self.key.integer_id())
 
 
@@ -45,10 +46,22 @@ class Question(ndb.Model):
 class Choice(ndb.Model):
     """A main model for representing a single answer."""
     question = ndb.IntegerProperty(indexed=True)
-    text = ndb.StringProperty(indexed=False)
+    text = ndb.StringProperty(indexed=True)
 
     def getNumberOfSupporters(self):
         return UserAnswers.query().filter(UserAnswers._properties["choice"]==self.key.integer_id()).filter(UserAnswers.isUpToDate == True).count()
+
+    def getWeightOfSupporters(self):
+        weight = 0
+        users = User.query().fetch()
+        for user in users:
+            query = (UserAnswers.query().
+                filter(UserAnswers._properties["choice"]==self.key.integer_id()).
+                filter(UserAnswers._properties["user"]==user.key.integer_id()).
+                filter(UserAnswers._properties["isUpToDate"]==True))
+            if (query.count() == 1):
+                weight += user.weight
+        return weight
 
 
 class UserAnswers(ndb.Model):
@@ -60,6 +73,46 @@ class UserAnswers(ndb.Model):
     number = ndb.IntegerProperty()
     isUpToDate = ndb.BooleanProperty(default=True)
 
+
+class WeightSolver:
+
+    def calculateWeights(self):
+        maleChoice = Choice.query().filter(Choice._properties["text"]=='Male').get()
+        self.maleChoiceId = maleChoice.key.integer_id()
+        femaleChoice = Choice.query().filter(Choice._properties["text"]=='Female').get()
+        self.femaleChoiceId = femaleChoice.key.integer_id()
+
+        # Count males and females
+        maleNum = (UserAnswers.query().
+            filter(UserAnswers._properties["choice"]==self.maleChoiceId).
+            filter(UserAnswers._properties["isUpToDate"]==True)).count()
+        
+        femaleNum = (UserAnswers.query().
+            filter(UserAnswers._properties["choice"]==self.femaleChoiceId).
+            filter(UserAnswers._properties["isUpToDate"]==True)).count()
+
+        print 'females\n'
+        print femaleNum
+        print '\nmales\n'
+        print maleNum
+
+        if femaleNum == 0 or maleNum == 0:
+            return
+        
+        menWomenRatio = maleNum/femaleNum
+        users = User.query().fetch()
+        for user in users:
+            if (self.isFemale(user)):
+                user.weight = menWomenRatio
+                user.put()
+
+
+    def isFemale(self,user):
+        query = (UserAnswers.query().
+            filter(UserAnswers._properties["choice"]==self.femaleChoiceId).
+            filter(UserAnswers._properties["user"]==user.key.integer_id()).
+            filter(UserAnswers._properties["isUpToDate"]==True))
+        return query.count() == 1
 
 class DataMocker:
     def populateFakeData(self):
@@ -76,7 +129,6 @@ class DataMocker:
         self.actualUser.put()
         self.user1 = User(parent=DATASTORE_KEY, email = "user1@example.com", name = 'user1')
         self.user1.put()
-        print self.user1.key.integer_id()
         self.user2 = User(parent=DATASTORE_KEY, email = "user2@example.com", name = 'user2')
         self.user2.put()
         self.user3 = User(parent=DATASTORE_KEY, email = "user3@example.com", name = 'user3')

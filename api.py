@@ -1,5 +1,5 @@
 import webapp2, json, time
-from model import User, Poll, Question, Choice, UserAnswers, DataMocker, DATASTORE_KEY
+from model import User, Poll, Question, Choice, UserAnswers, DataMocker, DATASTORE_KEY, WeightSolver
 
 class ApiHandler(webapp2.RequestHandler):
     def get(self):
@@ -14,6 +14,11 @@ class ApiHandler(webapp2.RequestHandler):
             self.getAllPolls(userOrNone)
         #elif (method=='vote'): for easy browser debugging
         #   self.postUserVote()
+        elif (method=="calculateWeights"):
+            ws = WeightSolver()
+            ws.calculateWeights()
+            self.response.write('Successfully calculated weights!')
+
         elif (method=='none'):
             self.response.write('No method was selected')
         else:
@@ -123,7 +128,8 @@ class ApiHandler(webapp2.RequestHandler):
         res = {
             'id': choice.key.integer_id(),
             'text': choice.text,
-            'votes': choice.getNumberOfSupporters(),
+            'raw_votes': choice.getNumberOfSupporters(),
+            'reweighted_votes': choice.getWeightOfSupporters(),
         }
         if (opt_user):
             res['doesUserSupportChoice'] = self.doesUserSupportChoice(choice, opt_user)
